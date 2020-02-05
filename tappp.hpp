@@ -201,7 +201,6 @@ namespace TAP {
 		 * but a counter is added.
 		 */
 		void SKIP(unsigned int how_many, const std::string& reason = "") {
-			std::string of = "/" + std::to_string(how_many);
 			auto current_of = [&] (unsigned int cur) {
 				std::string ret = reason.empty() ? "" : " ";
 				ret += std::to_string(1 + cur) + "/" + std::to_string(how_many);
