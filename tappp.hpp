@@ -95,6 +95,12 @@ namespace TAP {
 	}
 
 	/**
+	 * A sentinel type accepted by the Context constructor to indicate
+	 * that all tests should be skipped.
+	 */
+	enum skip_all { SKIP_ALL };
+
+	/**
 	 * A Context holds a TAP producer's state, including the test
 	 * plan, the test numbering, output stream and 'TODO' directives.
 	 * Its methods update the state and print TAP directly to the
@@ -117,17 +123,22 @@ namespace TAP {
 		 * is std::cout. No plan line is printed. You either have to call
 		 * `plan` before any tests or `done_testing` after the last one.
 		 */
-		Context(void) { }
+		Context(std::ostream& out = std::cout) : out(out) { }
 
 		/**
 		 * Create a new Context object and print a plan line.
 		 */
-		Context(unsigned int tests) {
+		Context(unsigned int tests, std::ostream& out = std::cout) : out(out) {
 			plan(tests);
 		}
 
-		/* TODO: We may also skip entire tests by planning 1..0 */
-		/* TODO: Make output stream configurable */
+		/**
+		 * Create a new Context and skip it entirely. The `1..0` plan
+		 * line is printed and the context is marked as finished.
+		 */
+		Context(const skip_all& skip, const std::string& reason = "", std::ostream& out = std::cout) : out(out) {
+			plan(skip, reason);
+		}
 
 		/**
 		 * Set up a test plan and emit the plan line.
@@ -144,6 +155,18 @@ namespace TAP {
 			out << "1.." << tests << std::endl;
 			planned = tests;
 			have_plan = true;
+		}
+
+		/**
+		 * Skip the entire test. Print the `1..0` plan line and then
+		 * mark the context as finished.
+		 */
+		void plan(const skip_all& skip, const std::string& reason = "") {
+			out << "1..0";
+			if (!reason.empty())
+				out << " # SKIP " << reason;
+			out << std::endl;
+			finished = true;
 		}
 
 		/**
@@ -289,7 +312,7 @@ namespace TAP {
 		bool is(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
 			bool is_ok = ok(m(got, expected), message);
 			if (!is_ok) {
-				if (not message.empty())
+				if (!message.empty())
 					diag("Test '" + message + "' failed:");
 				if constexpr (Occult::Stringifiable<T>::value)
 					diag("       Got: " + to_string(got));
@@ -306,7 +329,7 @@ namespace TAP {
 		bool isnt(const T& got, const U& unexpected, const std::string& message = "", Matcher m = Matcher()) {
 			bool is_ok = nok(m(got, unexpected), message);
 			if (!is_ok) {
-				if (not message.empty())
+				if (!message.empty())
 					diag("Test '" + message + "' failed:");
 				if constexpr (Occult::Stringifiable<T>::value)
 					diag("         Got: " + to_string(got));
@@ -328,6 +351,9 @@ namespace TAP {
 		void plan(unsigned int tests) { TAPP.plan(tests);      }
 		bool summary(void)            { return TAPP.summary(); }
 		void done_testing(void)       { TAPP.done_testing();   }
+		void plan(const skip_all& skip, const std::string& reason = "") {
+			return TAPP.plan(skip, reason);
+		}
 
 		bool ok( bool is_ok,  const std::string& message = "") { return TAPP.ok( is_ok,  message); }
 		bool nok(bool is_nok, const std::string& message = "") { return TAPP.nok(is_nok, message); }
