@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include <exception>
 #include <functional>
 #include <type_traits>
@@ -106,7 +107,7 @@ namespace TAP {
 	 * Its methods update the state and print TAP directly to the
 	 * output device.
 	 */
-	class Context {
+	class Context : public std::enable_shared_from_this<Context> {
 		std::ostream& out = std::cout;  /**< Output device     */
 		unsigned int planned = 0; /**< Number of planned tests */
 		unsigned int run     = 0; /**< Number of run tests     */
@@ -115,6 +116,17 @@ namespace TAP {
 
 		bool have_plan = false; /**< Whether a plan line was printed */
 		bool finished  = false; /**< Whether done_testing was called */
+
+		unsigned int depth       = 0; /**< Subtest depth       */
+		std::string description = ""; /**< Subtest description */
+		std::shared_ptr<Context> parent = nullptr; /**< Parent in the subtest stack */
+
+		/**
+		 * Return `out` but apply `depth` indentation first.
+		 */
+		std::ostream& line(void) {
+			return out << std::string(4 * depth, ' ');
+		}
 
 	public:
 
@@ -141,6 +153,42 @@ namespace TAP {
 		}
 
 		/**
+		 * Unless already done, close this TAP session.
+		 */
+		~Context(void) {
+			if (not finished)
+				done_testing();
+		}
+
+		/**
+		 * Create a new subtest off this one. The subtest uses the
+		 * same output device but indents its output, so that subtest-
+		 * unaware harnesses ignore it. When the subtest is destroyed,
+		 * it adds a single summary `pass` or `fail` to the test it
+		 * was created from.
+		 *
+		 * There must exist an std::shared_ptr refering to this context.
+		 */
+		std::shared_ptr<Context> subtest(const std::string& message = "") {
+			auto sub = std::make_shared<Context>(out);
+			sub->depth = depth + 1;
+			sub->description = message;
+			sub->parent = this->shared_from_this();
+			return sub;
+		}
+
+		/**
+		 * Like `subtest(void)` but already print a plan line.
+		 */
+		std::shared_ptr<Context> subtest(unsigned int tests, const std::string& message = "") {
+			auto sub = std::make_shared<Context>(tests, out);
+			sub->depth = depth + 1;
+			sub->description = message;
+			sub->parent = this->shared_from_this();
+			return sub;
+		}
+
+		/**
 		 * Set up a test plan and emit the plan line.
 		 */
 		void plan(unsigned int tests) {
@@ -152,7 +200,7 @@ namespace TAP {
 			if (run > 0)
 				throw TAP::X::LatePlan();
 
-			out << "1.." << tests << std::endl;
+			line() << "1.." << tests << std::endl;
 			planned = tests;
 			have_plan = true;
 		}
@@ -162,7 +210,7 @@ namespace TAP {
 		 * mark the context as finished.
 		 */
 		void plan(const skip_all& skip, const std::string& reason = "") {
-			out << "1..0";
+			line() << "1..0";
 			if (!reason.empty())
 				out << " # SKIP " << reason;
 			out << std::endl;
@@ -187,7 +235,7 @@ namespace TAP {
 				throw TAP::X::Finished();
 
 			if (!have_plan) {
-				out << "1.." << run << std::endl;
+				line() << "1.." << run << std::endl;
 			}
 			else {
 				if (planned != run) {
@@ -195,6 +243,10 @@ namespace TAP {
 					    " tests but ran " + std::to_string(run));
 				}
 			}
+
+			/* Report subtest summary to parent */
+			if (parent)
+				parent->ok(summary(), description);
 
 			finished = true;
 		}
@@ -207,9 +259,9 @@ namespace TAP {
 			if (finished)
 				throw TAP::X::Finished();
 
-			out << (is_ok ? "ok " : "not ok ")
-			    << ++run << " - "
-				<< message;
+			line() << (is_ok ? "ok " : "not ok ")
+			       << ++run << " - "
+				   << message;
 			if (!todo.empty()) {
 				out << (message.empty() ? "" : " ");
 				out << "# TODO " << todo;
@@ -286,7 +338,7 @@ namespace TAP {
 			if (finished)
 				throw TAP::X::Finished();
 
-			out << "Bail out!";
+			line() << "Bail out!";
 			if (!reason.empty())
 				out << " " << reason;
 			out << std::endl;
@@ -298,7 +350,7 @@ namespace TAP {
 		 * Print a diagnostic message.
 		 */
 		void diag(const std::string& message) {
-			out << "# " << message << std::endl;
+			line() << "# " << message << std::endl;
 		}
 
 		/**
@@ -379,51 +431,88 @@ namespace TAP {
 	};
 
 	/**
-	 * Procedural interface. We keep a global Context object that is
-	 * default-constructed and expose its methods as free-standing
-	 * functions.
+	 * Procedural interface. We keep a global Context object behind an
+	 * std::shared_ptr named TAPP that is default-constructed and expose
+	 * its methods as free-standing functions.
+	 *
+	 * This interface also maintains a stack of subtests. The `subtest`
+	 * function does slightly more than the eponymous Context method:
+	 * it constructs the subtest, puts it into TAPP and returns a Guard
+	 * object which, when it goes out of scope, restores the previous
+	 * TAPP object.
 	 */
 	namespace {
-		Context TAPP;
+		auto TAPP = std::make_shared<Context>();
 
-		void plan(unsigned int tests) { TAPP.plan(tests);      }
-		bool summary(void)            { return TAPP.summary(); }
-		void done_testing(void)       { TAPP.done_testing();   }
+		void plan(unsigned int tests) { TAPP->plan(tests);      }
+		bool summary(void)            { return TAPP->summary(); }
+		void done_testing(void)       { TAPP->done_testing();   }
 		void plan(const skip_all& skip, const std::string& reason = "") {
-			return TAPP.plan(skip, reason);
+			return TAPP->plan(skip, reason);
 		}
 
-		bool ok( bool is_ok,  const std::string& message = "") { return TAPP.ok( is_ok,  message); }
-		bool nok(bool is_nok, const std::string& message = "") { return TAPP.nok(is_nok, message); }
+		/**
+		 * RAII object that represents an active subtest. When it is
+		 * destroyed, it reinstates the subtest's parent as the TAPP.
+		 */
+		struct Guard {
+			std::shared_ptr<Context> top;
 
-		bool pass(const std::string& message = "") { return TAPP.pass(message); }
-		bool fail(const std::string& message = "") { return TAPP.fail(message); }
+			Guard(std::shared_ptr<Context> sub) {
+				top = TAPP;
+				TAPP = sub;
+			}
 
-		void TODO(const std::string& reason = "-") { TAPP.TODO(reason); }
-		void SKIP(const std::string& reason = "")  { TAPP.SKIP(reason); }
-		void SKIP(unsigned int how_many, const std::string& reason = "") { TAPP.SKIP(how_many, reason); }
+			~Guard(void) {
+				TAPP = top;
+			}
+		};
 
-		void BAIL(const std::string& reason = "") { TAPP.BAIL(reason); }
+		Guard subtest(const std::string& message = "") {
+			return Guard(TAPP->subtest(message));
+		}
 
-		void diag(const std::string& message) { TAPP.diag(message); }
+		Guard subtest(unsigned int tests, const std::string& message = "") {
+			return Guard(TAPP->subtest(tests, message));
+		}
+
+		/**
+		 * Syntactic sugar macro for a "SUBTEST" block.
+		 */
+		#define SUBTEST(...)		\
+			if constexpr (auto TAPP_SUBTEST = subtest(__VA_ARGS__); true)
+
+		bool ok( bool is_ok,  const std::string& message = "") { return TAPP->ok( is_ok,  message); }
+		bool nok(bool is_nok, const std::string& message = "") { return TAPP->nok(is_nok, message); }
+
+		bool pass(const std::string& message = "") { return TAPP->pass(message); }
+		bool fail(const std::string& message = "") { return TAPP->fail(message); }
+
+		void TODO(const std::string& reason = "-") { TAPP->TODO(reason); }
+		void SKIP(const std::string& reason = "")  { TAPP->SKIP(reason); }
+		void SKIP(unsigned int how_many, const std::string& reason = "") { TAPP->SKIP(how_many, reason); }
+
+		void BAIL(const std::string& reason = "") { TAPP->BAIL(reason); }
+
+		void diag(const std::string& message) { TAPP->diag(message); }
 
 		template<typename T, typename U, typename Matcher = std::equal_to<T>>
 		bool is(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
-			return TAPP.is(got, expected, message, m);
+			return TAPP->is(got, expected, message, m);
 		}
 
 		template<typename T, typename U, typename Matcher = std::equal_to<T>>
 		bool isnt(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
-			return TAPP.isnt(got, expected, message, m);
+			return TAPP->isnt(got, expected, message, m);
 		}
 
 		bool lives(std::function<void(void)> f, const std::string& message = "") {
-			return TAPP.lives(f, message);
+			return TAPP->lives(f, message);
 		}
 
 		template<typename E = std::exception>
 		bool throws(std::function<void(void)> f, const std::string& message = "") {
-			return TAPP.throws<E>(f, message);
+			return TAPP->throws<E>(f, message);
 		}
 	}
 }
