@@ -16,7 +16,10 @@
 #define TAPPP_HPP
 
 #include <iostream>
+#include <sstream>
 #include <exception>
+#include <functional>
+#include <type_traits>
 
 namespace TAP {
 	/**
@@ -48,6 +51,47 @@ namespace TAP {
 		struct LatePlan : std::runtime_error {
 			LatePlan(void) : std::runtime_error("Too late to plan tests now") { }
 		};
+	}
+
+	/* Misc tools */
+	namespace {
+		/**
+		 * Stringify something in a pluggable way, using stringstream.
+		 */
+		template<typename T>
+		static std::string to_string(const T& x) {
+			std::stringstream ss;
+			ss << x;
+			return ss.str();
+		}
+
+		/**
+		 * Determine at compile-time whether the given expression is
+		 * stringifiable using operator<< on a stringstream.
+		 */
+		namespace Occult {
+			/* Many thanks to https://stackoverflow.com/a/39348287
+			 * and https://stackoverflow.com/a/49004530 */
+			template<typename Op, typename R, typename ... Args>
+			std::is_convertible<std::invoke_result_t<Op, Args...>, R> is_invokable_test(int);
+
+			template<typename Op, typename R, typename ... Args>
+			std::false_type is_invokable_test(...);
+
+			template<typename Op, typename R, typename ... Args>
+			using is_invokable = decltype(is_invokable_test<Op, R, Args...>(0));
+
+			struct left_shift {
+				template <typename L, typename R>
+				constexpr auto operator()(L&& l, R&& r) const
+						-> decltype(std::forward<L>(l) << std::forward<R>(r)) {
+					return std::forward<L>(l) << std::forward<R>(r);
+				}
+			};
+
+			template<typename T>
+			using Stringifiable = is_invokable<left_shift, std::ostream&, std::ostream&, T>;
+		}
 	}
 
 	/**
@@ -233,6 +277,44 @@ namespace TAP {
 		void diag(const std::string& message) {
 			out << "# " << message << std::endl;
 		}
+
+		/**
+		 * Check if the first argument equals the second. The meaning of
+		 * "equality" is dictated by the last argument, which defaults
+		 * to `std::equal_to`. If the test fails and the two values can
+		 * be stringified by operator<<'ing them to a stringstream, then
+		 * the differing values are printed as diagnostics.
+		 */
+		template<typename T, typename U, typename Matcher = std::equal_to<T>>
+		bool is(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
+			bool is_ok = ok(m(got, expected), message);
+			if (!is_ok) {
+				if (not message.empty())
+					diag("Test '" + message + "' failed:");
+				if constexpr (Occult::Stringifiable<T>::value)
+					diag("       Got: " + to_string(got));
+				if constexpr (Occult::Stringifiable<U>::value)
+					diag("  Expected: " + to_string(expected));
+			}
+			return is_ok;
+		}
+
+		/**
+		 * Like `is` but negates the comparison.
+		 */
+		template<typename T, typename U, typename Matcher = std::equal_to<T>>
+		bool isnt(const T& got, const U& unexpected, const std::string& message = "", Matcher m = Matcher()) {
+			bool is_ok = nok(m(got, unexpected), message);
+			if (!is_ok) {
+				if (not message.empty())
+					diag("Test '" + message + "' failed:");
+				if constexpr (Occult::Stringifiable<T>::value)
+					diag("         Got: " + to_string(got));
+				if constexpr (Occult::Stringifiable<U>::value)
+					diag("  Unexpected: " + to_string(unexpected));
+			}
+			return is_ok;
+		}
 	};
 
 	/**
@@ -260,6 +342,16 @@ namespace TAP {
 		void BAIL(const std::string& reason = "") { TAPP.BAIL(reason); }
 
 		void diag(const std::string& message) { TAPP.diag(message); }
+
+		template<typename T, typename U, typename Matcher = std::equal_to<T>>
+		bool is(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
+			return TAPP.is(got, expected, message, m);
+		}
+
+		template<typename T, typename U, typename Matcher = std::equal_to<T>>
+		bool isnt(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
+			return TAPP.isnt(got, expected, message, m);
+		}
 	}
 }
 
