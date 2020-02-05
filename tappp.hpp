@@ -338,6 +338,44 @@ namespace TAP {
 			}
 			return is_ok;
 		}
+
+		/**
+		 * Run the given code and succeed if no exception happens.
+		 */
+		bool lives(std::function<void(void)> f, const std::string& message = "") {
+			bool is_ok;
+			try {
+				f();
+				is_ok = pass(message);
+			}
+			catch (...) {
+				is_ok = fail(message);
+			}
+			return is_ok;
+		}
+
+		/**
+		 * Run the given code and succeed if it throws an exception of
+		 * the given type. Throwing a different exception or no exception
+		 * at all fails the test.
+		 */
+		template<typename E = std::exception>
+		bool throws(std::function<void(void)> f, const std::string& message = "") {
+			bool is_ok;
+			try {
+				f();
+				is_ok = fail(message);
+				diag("code succeeded");
+			}
+			catch (const E& e) {
+				is_ok = pass(message);
+			}
+			catch (...) {
+				is_ok = fail(message);
+				diag("different exception occurred");
+			}
+			return is_ok;
+		}
 	};
 
 	/**
@@ -377,6 +415,15 @@ namespace TAP {
 		template<typename T, typename U, typename Matcher = std::equal_to<T>>
 		bool isnt(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
 			return TAPP.isnt(got, expected, message, m);
+		}
+
+		bool lives(std::function<void(void)> f, const std::string& message = "") {
+			return TAPP.lives(f, message);
+		}
+
+		template<typename E = std::exception>
+		bool throws(std::function<void(void)> f, const std::string& message = "") {
+			return TAPP.throws<E>(f, message);
 		}
 	}
 }
