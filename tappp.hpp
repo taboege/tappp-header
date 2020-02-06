@@ -179,7 +179,7 @@ namespace TAP {
 		}
 
 		/**
-		 * Like `subtest(void)` but already print a plan line.
+		 * Like `subtest(message)` but already print a plan line.
 		 */
 		std::shared_ptr<Context> subtest(unsigned int tests, const std::string& message = "") {
 			auto sub = std::make_shared<Context>(tests, out);
@@ -268,7 +268,7 @@ namespace TAP {
 				out << "# TODO " << todo;
 				/* Count failed TODOs */
 				if (not is_ok)
-					todos++;
+					++todos;
 				todo.clear();
 			}
 			out << std::endl;

@@ -107,9 +107,14 @@ in the existing ones, though. The advantages of `tappp.hpp` shared with
 
 What I consider to be unique advantages over `libtap++`:
 
-- `tappp.hpp` is just a single header, easy to include in projects.
+- `tappp.hpp` is just a single header, easy to include in projects.¹
 - It has been (cleanly!) written from scratch to use modern C++ features.
 - It supports subtests as a compatible TAP extension.
+
+¹ The test suite is compiled and run either by maintainers or on installation
+of the software you care about. If the tests pass, they are thrown away and
+the software is installed. As such, having a compile-time dependency on a
+full-blown shared library for producing TAP seems like overkill to me.
 
 ## TODO
 
