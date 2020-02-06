@@ -369,7 +369,7 @@ namespace TAP {
 			bool is_ok = ok(m(got, expected), message);
 			if (!is_ok) {
 				if (!message.empty())
-					diag("Test '" + message + "' failed:");
+					diag("Test '" + message + "' failed");
 				if constexpr (Occult::Stringifiable<T>::value)
 					diag("       Got: " + to_string(got));
 				if constexpr (Occult::Stringifiable<U>::value)
@@ -386,7 +386,7 @@ namespace TAP {
 			bool is_ok = nok(m(got, unexpected), message);
 			if (!is_ok) {
 				if (!message.empty())
-					diag("Test '" + message + "' failed:");
+					diag("Test '" + message + "' failed");
 				if constexpr (Occult::Stringifiable<T>::value)
 					diag("         Got: " + to_string(got));
 				if constexpr (Occult::Stringifiable<U>::value)
