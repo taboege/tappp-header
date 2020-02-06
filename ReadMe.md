@@ -12,11 +12,17 @@
 using namespace TAP;
 
 int main(void) {
-    plan(8);
+    plan(10);
 
     diag("let's start slowly");
     pass("the first one's free");
+
     ok(1 < 255, "integer comparison works");
+    is("55", 55, "pluggable comparison",
+        [&](std::string s, int i) {
+            return s == std::to_string(i);
+        }
+    );
 
     std::vector a{5,10,12};
     std::vector b{5,10,15};
@@ -24,11 +30,10 @@ int main(void) {
     is(a[0], 5, "first element is 5");
     isnt(a[2], b[2], "last elements differ");
 
-    is("55", 55, "pluggable comparison",
-        [&](std::string s, int i) {
-            return s == std::to_string(i);
-        }
-    );
+    TODO("they do differ, let's see");
+    is(a[2], b[2], "give me diagnostics");
+    TODO("compiles, works but can't diagnose");
+    is(a, b, "differing vectors");
 
     SUBTEST("exercising exceptions") {
         throws<std::out_of_range>([&] { a.at(3); },
@@ -38,7 +43,7 @@ int main(void) {
             std::bitset<5> mybitset(std::string("01234"));
         }, "bitset takes only bits");
 
-        TODO("will fail, research correct exception type!");
+        TODO("research correct exception type!");
         throws<std::domain_error>([&] {
             std::vector<int> myvector;
             myvector.resize(myvector.max_size() + 1);
@@ -56,21 +61,27 @@ int main(void) {
 ```
 
 ```
-1..8
+1..10
 # let's start slowly
 ok 1 - the first one's free
 ok 2 - integer comparison works
 ok 3 - pluggable comparison
 ok 4 - first element is 5
 ok 5 - last elements differ
+not ok 6 - give me diagnostics # TODO they do differ, let's see
+# Test 'give me diagnostics' failed
+#        Got: 12
+#   Expected: 15
+not ok 7 - differing vectors # TODO compiles, works but can't diagnose
+# Test 'differing vectors' failed
     ok 1 - index 3 is out of bounds
     ok 2 - bitset takes only bits
     not ok 3 - resizing too much leaves domain # TODO research correct exception type!
     # different exception occurred
     1..3
-ok 6 - exercising exceptions
-ok 7 - changed last element
-ok 8 - vectors match now
+ok 8 - exercising exceptions
+ok 9 - changed last element
+ok 10 - vectors match now
 ```
 
 ## DESCRIPTION

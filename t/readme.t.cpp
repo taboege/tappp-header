@@ -7,7 +7,7 @@
 using namespace TAP;
 
 int main(void) {
-	plan(8);
+	plan(10);
 
 	diag("let's start slowly");
 	pass("the first one's free");
@@ -24,6 +24,11 @@ int main(void) {
 
 	is(a[0], 5, "first element is 5");
 	isnt(a[2], b[2], "last elements differ");
+
+	TODO("they do differ, let's see");
+	is(a[2], b[2], "give me diagnostics");
+	TODO("compiles, works but can't diagnose");
+	is(a, b, "differing vectors");
 
 	SUBTEST("exercising exceptions") {
 		throws<std::out_of_range>([&] { a.at(3); },
