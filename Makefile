@@ -1,4 +1,4 @@
-TESTS = $(patsubst %.t.cpp,%.t,$(wildcard *.t.cpp))
+TESTS = $(patsubst %.t.cpp,%.t,$(wildcard t/*.t.cpp))
 
 .PHONY: all
 all: $(TESTS)
