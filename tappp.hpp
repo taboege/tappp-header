@@ -103,7 +103,7 @@ namespace TAP {
 
 	/**
 	 * A Context holds a TAP producer's state, including the test
-	 * plan, the test numbering, output stream and 'TODO' directives.
+	 * plan, the test numbering, output stream and TODO directives.
 	 * Its methods update the state and print TAP directly to the
 	 * output device.
 	 */
@@ -112,7 +112,8 @@ namespace TAP {
 		unsigned int planned = 0; /**< Number of planned tests */
 		unsigned int run     = 0; /**< Number of run tests     */
 		unsigned int good    = 0; /**< Number of "ok" tests    */
-		std::string  todo   = ""; /**< Next test's 'TODO'      */
+		unsigned int todos   = 0; /**< Number of failed TODOs  */
+		std::string  todo   = ""; /**< Next test's TODO        */
 
 		bool have_plan = false; /**< Whether a plan line was printed */
 		bool finished  = false; /**< Whether done_testing was called */
@@ -223,7 +224,7 @@ namespace TAP {
 		 * vs. all run tests.
 		 */
 		bool summary(void) {
-			return good == (have_plan ? planned : run);
+			return good + todos == (have_plan ? planned : run);
 		}
 
 		/**
@@ -265,6 +266,9 @@ namespace TAP {
 			if (!todo.empty()) {
 				out << (message.empty() ? "" : " ");
 				out << "# TODO " << todo;
+				/* Count failed TODOs */
+				if (not is_ok)
+					todos++;
 				todo.clear();
 			}
 			out << std::endl;
