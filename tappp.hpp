@@ -441,7 +441,7 @@ namespace TAP {
 	 *
 	 * This interface also maintains a stack of subtests. The `subtest`
 	 * function does slightly more than the eponymous Context method:
-	 * it constructs the subtest, puts it into TAPP and returns a Guard
+	 * it constructs the subtest, puts it into TAPP and returns a guard
 	 * object which, when it goes out of scope, restores the previous
 	 * TAPP object.
 	 */
@@ -455,29 +455,31 @@ namespace TAP {
 			return TAPP->plan(skip, reason);
 		}
 
-		/**
-		 * RAII object that represents an active subtest. When it is
-		 * destroyed, it reinstates the subtest's parent as the TAPP.
-		 */
-		struct Guard {
-			std::shared_ptr<Context> top;
+		namespace Subtest {
+			/**
+			 * RAII object that represents an active subtest. When it is
+			 * destroyed, it reinstates the subtest's parent as the TAPP.
+			 */
+			struct Guard {
+				std::shared_ptr<Context> top;
 
-			Guard(std::shared_ptr<Context> sub) {
-				top = TAPP;
-				TAPP = sub;
-			}
+				Guard(std::shared_ptr<Context> sub) {
+					top = TAPP;
+					TAPP = sub;
+				}
 
-			~Guard(void) {
-				TAPP = top;
-			}
-		};
-
-		Guard subtest(const std::string& message = "") {
-			return Guard(TAPP->subtest(message));
+				~Guard(void) {
+					TAPP = top;
+				}
+			};
 		}
 
-		Guard subtest(unsigned int tests, const std::string& message = "") {
-			return Guard(TAPP->subtest(tests, message));
+		Subtest::Guard subtest(const std::string& message = "") {
+			return Subtest::Guard(TAPP->subtest(message));
+		}
+
+		Subtest::Guard subtest(unsigned int tests, const std::string& message = "") {
+			return Subtest::Guard(TAPP->subtest(tests, message));
 		}
 
 		/**
