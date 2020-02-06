@@ -55,6 +55,24 @@ int main(void) {
 }
 ```
 
+```
+1..8
+# let's start slowly
+ok 1 - the first one's free
+ok 2 - integer comparison works
+ok 3 - pluggable comparison
+ok 4 - first element is 5
+ok 5 - last elements differ
+    ok 1 - index 3 is out of bounds
+    ok 2 - bitset takes only bits
+    not ok 3 - resizing too much leaves domain # TODO research correct exception type!
+    # different exception occurred
+    1..3
+ok 6 - exercising exceptions
+ok 7 - changed last element
+ok 8 - vectors match now
+```
+
 ## DESCRIPTION
 
 This library consists of a single header `tappp.hpp` which implements an
