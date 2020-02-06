@@ -94,12 +94,10 @@ becomes nice to use once you are `using namespace TAP`.
 The library is short and completely documented in the source code.
 Its interface is close to Perl's [Test::More](https://metacpan.org/pod/Test::More)
 and Raku's [Test](https://docs.raku.org/type/Test) modules.
-
 There are other C++ libraries of this kind. The author is aware of
 [libperl++](https://github.com/Leont/libperl--) and
 [libtap++](https://github.com/cbab/libtappp), the latter being a fork
 of the former and this library taking inspiration from both.
-
 I wouldn't have written this library if there weren't things to improve
 in the existing ones, though. The advantages of `tappp.hpp` shared with
 `libtap++` over `libperl++` are:
