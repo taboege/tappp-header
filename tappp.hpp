@@ -149,7 +149,7 @@ namespace TAP {
 		 * Create a new Context and skip it entirely. The `1..0` plan
 		 * line is printed and the context is marked as finished.
 		 */
-		Context(const skip_all& skip, const std::string& reason = "", std::ostream& out = std::cout) : out(out) {
+		Context(const skip_all& skip [[maybe_unused]], const std::string& reason = "", std::ostream& out = std::cout) : out(out) {
 			plan(skip, reason);
 		}
 
@@ -210,7 +210,7 @@ namespace TAP {
 		 * Skip the entire test. Print the `1..0` plan line and then
 		 * mark the context as finished.
 		 */
-		void plan(const skip_all& skip, const std::string& reason = "") {
+		void plan(const skip_all& skip [[maybe_unused]], const std::string& reason = "") {
 			line() << "1..0";
 			if (!reason.empty())
 				out << " # SKIP " << reason;
@@ -451,7 +451,7 @@ namespace TAP {
 		void plan(unsigned int tests) { TAPP->plan(tests);      }
 		bool summary(void)            { return TAPP->summary(); }
 		void done_testing(void)       { TAPP->done_testing();   }
-		void plan(const skip_all& skip, const std::string& reason = "") {
+		void plan(const skip_all& skip [[maybe_unused]], const std::string& reason = "") {
 			return TAPP->plan(skip, reason);
 		}
 

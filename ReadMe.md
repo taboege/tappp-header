@@ -45,8 +45,7 @@ int main(void) {
 
         TODO("research correct exception type!");
         throws<std::domain_error>([&] {
-            std::vector<int> myvector;
-            myvector.resize(myvector.max_size() + 1);
+            b.resize(b.max_size() + 1);
         }, "resizing too much leaves domain");
 
         done_testing();
