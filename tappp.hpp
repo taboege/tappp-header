@@ -182,10 +182,11 @@ namespace TAP {
 		 * Like `subtest(message)` but already print a plan line.
 		 */
 		std::shared_ptr<Context> subtest(unsigned int tests, const std::string& message = "") {
-			auto sub = std::make_shared<Context>(tests, out);
+			auto sub = std::make_shared<Context>(out);
 			sub->depth = depth + 1;
 			sub->description = message;
 			sub->parent = this->shared_from_this();
+			sub->plan(tests);
 			return sub;
 		}
 

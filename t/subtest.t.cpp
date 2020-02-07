@@ -2,6 +2,7 @@
 #include <vector>
 #include <bitset>
 #include <cstdlib>
+#include <cmath>
 
 using namespace TAP;
 
@@ -26,6 +27,11 @@ int main(void) {
 		throws([&] {
 			std::bitset<5> mybitset(std::string("01234"));
 		}, "bitset takes only bits");
+
+		SUBTEST(2, "subtests are nestable") {
+			lives([&] { std::sqrt( 2); }, "sqrt( 2) lives");
+			lives([&] { std::sqrt(-2); }, "sqrt(-2) lives, too");
+		}
 
 		TODO("research correct exception type");
 		throws<std::domain_error>([&] {
