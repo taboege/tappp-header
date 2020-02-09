@@ -122,7 +122,6 @@ TAP producers, such as [Raku's Test module](https://docs.raku.org/type/Test)
 provide inspiration for more:
 
 - `is_approx`: testing relative error for numerics
-- `like` / `unlike`: compare string with regex
 - `is_deeply`: recursive container unpacking
 
 ## SEE ALSO

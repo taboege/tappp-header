@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
+#include <regex>
 #include <exception>
 #include <functional>
 #include <type_traits>
@@ -94,6 +95,24 @@ namespace TAP {
 			template<typename T>
 			using Stringifiable = is_invokable<left_shift, std::ostream&, std::ostream&, T>;
 		}
+
+		/**
+		 * Unary predicate type decides if an object of type T is `ok`.
+		 */
+		template<typename T>
+		using Predicate = std::function<bool(const T&)>;
+
+		/**
+		 * Wrapper to use a (unary) Predicate as a (binary) Matcher:
+		 * Matcher(T, p) = p(T).
+		 */
+		template<typename T>
+		struct PredicateMatcher {
+			bool operator()(const T& got, Predicate<T> p) {
+				return p(got);
+			}
+		};
+
 	}
 
 	/**
@@ -397,6 +416,49 @@ namespace TAP {
 		}
 
 		/**
+		 * Test the value against a predicate. Uses `is` internally, so on
+		 * failure a best effort is made to print the unexpected value.
+		 */
+		template<typename T>
+		bool like(const T& got, Predicate<T> p, const std::string& message = "") {
+			return is(got, p, message, PredicateMatcher<T>());
+		}
+
+		/**
+		 * Specialization of `like` that does an std::regex match against
+		 * the given pattern (using default flags). If the match fails,
+		 * the string is printed as diagnostic.
+		 */
+		template<typename T>
+		bool like(const T& got, const std::string& pattern, const std::string& message = "") {
+			std::regex rx(pattern);
+			Predicate<T> p = [&] (const T& x) -> bool {
+				return regex_match(x, rx);
+			};
+			return like(got, p, message);
+		}
+
+		/**
+		 * Like `like` but negates the predicate.
+		 */
+		template<typename T>
+		bool unlike(const T& got, Predicate<T> p, const std::string& message = "") {
+			return isnt(got, p, message, PredicateMatcher<T>());
+		}
+
+		/**
+		 * Like `like` with a regex but negates the regex match.
+		 */
+		template<typename T>
+		bool unlike(const T& got, const std::string& pattern, const std::string& message = "") {
+			std::regex rx(pattern);
+			Predicate<T> p = [&] (const T& x) -> bool {
+				return regex_match(x, rx);
+			};
+			return unlike(got, p, message);
+		}
+
+		/**
 		 * Run the given code and succeed if no exception happens.
 		 */
 		bool lives(std::function<void(void)> f, const std::string& message = "") {
@@ -511,6 +573,24 @@ namespace TAP {
 		template<typename T, typename U, typename Matcher = std::equal_to<T>>
 		bool isnt(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {
 			return TAPP->isnt(got, expected, message, m);
+		}
+
+		template<typename T>
+		bool like(const T& got, Predicate<T> p, const std::string& message = "") {
+			return TAPP->like(got, p, message);
+		}
+		template<typename T>
+		bool like(const T& got, const std::string& pattern, const std::string& message = "") {
+			return TAPP->like(got, pattern, message);
+		}
+
+		template<typename T>
+		bool unlike(const T& got, Predicate<T> p, const std::string& message = "") {
+			return TAPP->unlike(got, p, message);
+		}
+		template<typename T>
+		bool unlike(const T& got, const std::string& pattern, const std::string& message = "") {
+			return TAPP->unlike(got, pattern, message);
 		}
 
 		bool lives(std::function<void(void)> f, const std::string& message = "") {
