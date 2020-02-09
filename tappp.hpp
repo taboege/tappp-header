@@ -62,7 +62,8 @@ namespace TAP {
 		template<typename T>
 		static std::string to_string(const T& x) {
 			std::stringstream ss;
-			ss << x;
+			ss << std::boolalpha
+			   << x;
 			return ss.str();
 		}
 
