@@ -495,6 +495,28 @@ namespace TAP {
 			}
 			return is_ok;
 		}
+
+		/**
+		 * Run the given code like `throws` but additionally check if the
+		 * exception of type E has a what() matching regex pattern.
+		 */
+		template<typename E = std::exception>
+		bool throws_like(std::function<void(void)> f, const std::string& pattern, const std::string& message = "") {
+			bool is_ok;
+			try {
+				f();
+				is_ok = fail(message);
+				diag("code succeeded");
+			}
+			catch (const E& e) {
+				is_ok = like(e.what(), pattern, message);
+			}
+			catch (...) {
+				is_ok = fail(message);
+				diag("different exception occurred");
+			}
+			return is_ok;
+		}
 	};
 
 	/**
@@ -600,6 +622,11 @@ namespace TAP {
 		template<typename E = std::exception>
 		bool throws(std::function<void(void)> f, const std::string& message = "") {
 			return TAPP->throws<E>(f, message);
+		}
+
+		template<typename E = std::exception>
+		bool throws_like(std::function<void(void)> f, const std::string& pattern, const std::string& message = "") {
+			return TAPP->throws_like<E>(f, pattern, message);
 		}
 	}
 }

@@ -34,9 +34,9 @@ int main(void) {
 		throws<std::out_of_range>([&] { a.at(3); },
 			"index 3 is out of bounds");
 
-		throws([&] {
+		throws_like([&] {
 			std::bitset<5> mybitset(std::string("01234"));
-		}, "bitset takes only bits");
+		}, "bitset::_M_copy_from_ptr", "bitset takes only bits");
 
 		TODO("research correct exception type!");
 		throws<std::domain_error>([&] {

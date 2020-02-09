@@ -1,4 +1,5 @@
 #include <tappp.hpp>
+#include <vector>
 #include <stdexcept>
 #include <cstdlib>
 
