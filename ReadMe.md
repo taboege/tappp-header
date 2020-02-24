@@ -7,6 +7,7 @@
 #include <vector>
 #include <bitset>
 #include <stdexcept>
+#include <ctime>
 #include <cstdlib>
 
 using namespace TAP;
@@ -14,7 +15,7 @@ using namespace TAP;
 int main(void) {
     plan(10);
 
-    diag("let's start slowly");
+    diag("current time is ", time(0));
     pass("the first one's free");
 
     ok(1 < 255, "integer comparison works");
@@ -61,18 +62,16 @@ int main(void) {
 
 ```
 1..10
-# let's start slowly
+# current time is 1582508245
 ok 1 - the first one's free
 ok 2 - integer comparison works
 ok 3 - pluggable comparison
 ok 4 - first element is 5
 ok 5 - last elements differ
 not ok 6 - give me diagnostics # TODO they do differ, let's see
-# Test 'give me diagnostics' failed
-#        Got: 12
-#   Expected: 15
+# Expected: '15'
+#      Got: '12'
 not ok 7 - differing vectors # TODO compiles, works but can't diagnose
-# Test 'differing vectors' failed
     ok 1 - index 3 is out of bounds
     ok 2 - bitset takes only bits
     not ok 3 - resizing too much leaves domain # TODO research correct exception type!

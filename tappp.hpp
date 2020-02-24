@@ -97,6 +97,24 @@ namespace TAP {
 		}
 
 		/**
+		 * The base case for the variadic print(). Just adds the
+		 * trailing newline.
+		 */
+		void print(std::ostream& out) {
+			out << std::endl;
+		}
+
+		/**
+		 * Print a variadic sequence of stringifiable things.
+		 */
+		template <typename T, typename... Rs>
+		void print(std::ostream& out, T x, Rs... rest) {
+			static_assert(Occult::Stringifiable<T>::value);
+			out << x;
+			print(out, rest...);
+		}
+
+		/**
 		 * Unary predicate type decides if an object of type T is `ok`.
 		 */
 		template<typename T>
@@ -374,8 +392,9 @@ namespace TAP {
 		/**
 		 * Print a diagnostic message.
 		 */
-		void diag(const std::string& message) {
-			line() << "# " << message << std::endl;
+		template<typename... Ts>
+		void diag(Ts... values) {
+			print(line() << "# ", values...);
 		}
 
 		/**
@@ -607,7 +626,10 @@ namespace TAP {
 
 		void BAIL(const std::string& reason = "") { TAPP->BAIL(reason); }
 
-		void diag(const std::string& message) { TAPP->diag(message); }
+		template<typename... Ts>
+		void diag(Ts... values) {
+			TAPP->diag(values...);
+		}
 
 		template<typename T, typename U, typename Matcher = std::equal_to<T>>
 		bool is(const T& got, const U& expected, const std::string& message = "", Matcher m = Matcher()) {

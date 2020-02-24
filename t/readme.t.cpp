@@ -2,6 +2,7 @@
 #include <vector>
 #include <bitset>
 #include <stdexcept>
+#include <ctime>
 #include <cstdlib>
 
 using namespace TAP;
@@ -9,7 +10,7 @@ using namespace TAP;
 int main(void) {
 	plan(10);
 
-	diag("let's start slowly");
+	diag("current time is ", time(0));
 	pass("the first one's free");
 
 	ok(1 < 255, "integer comparison works");
