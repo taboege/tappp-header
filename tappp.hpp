@@ -23,6 +23,8 @@
 #include <functional>
 #include <type_traits>
 
+#define TAPPP_VERSION	0x000100U
+
 namespace TAP {
 	/**
 	 * Exceptions that a TAP producer may throw.
