@@ -89,8 +89,10 @@ object-oriented [Test Anything Protocol](https://testanything.org/) producer
 in C++17. For convenience, a procedural interface is written on top, which
 becomes nice to use once you are `using namespace TAP`.
 
-The library is short and completely documented in the source code.
-Its interface is close to Perl's [Test::More](https://metacpan.org/pod/Test::More)
+The library is short and contains short documentation in the source code.
+The complete documentation is is in the <Documentation.md> file.
+
+The library's interface is close to Perl's [Test::More](https://metacpan.org/pod/Test::More)
 and Raku's [Test](https://docs.raku.org/type/Test) modules.
 There are other C++ libraries of this kind. The author is aware of
 [libperl++](https://github.com/Leont/libperl--) and
@@ -101,18 +103,21 @@ in the existing ones, though. The advantages of `tappp.hpp` shared with
 `libtap++` over `libperl++` are:
 
 - The TAP producer is isolated into a single library.
-- There is no compile-time boost dependency. Just pure C++17.
+- There is no compile-time boost (or other) dependency.
+  Just pure C++17.
 
 What I consider to be unique advantages over `libtap++`:
 
 - `tappp.hpp` is just a single header, easy to include in projects.¹
-- It has been (cleanly!) written from scratch to use modern C++ features.
-- It supports subtests as a compatible TAP extension.
+- It has been (cleanly!) written from scratch to use modern C++ conveniences.
+- It supports subtests compatible with TAP.
 
-¹ The test suite is compiled and run either by maintainers or on installation
-of the software you care about. If the tests pass, they are thrown away and
-the software is installed. As such, having a compile-time dependency on a
-full-blown shared library for producing TAP seems like overkill to me.
+¹ The test suite of a project is compiled and run either by maintainers
+or on installation of the software you care about. If the tests pass, they
+are thrown away and the software is installed. As such, having a compile-time
+dependency on a full-blown shared library for producing TAP seems like
+useless overhead, especially since the object code isn't really shared all
+that much, and the library is highly templated anyway.
 
 ## TODO
 

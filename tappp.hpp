@@ -102,18 +102,17 @@ namespace TAP {
 		 * The base case for the variadic print(). Just adds the
 		 * trailing newline.
 		 */
-		void print(std::ostream& out) {
-			out << std::endl;
+		std::ostream& print(std::ostream& out) {
+			return out << std::endl;
 		}
 
 		/**
 		 * Print a variadic sequence of stringifiable things.
 		 */
 		template <typename T, typename... Rs>
-		void print(std::ostream& out, T x, Rs... rest) {
+		std::ostream& print(std::ostream& out, T x, Rs... rest) {
 			static_assert(Occult::Stringifiable<T>::value);
-			out << x;
-			print(out, rest...);
+			return print(out << x, rest...);
 		}
 
 		/**
@@ -563,7 +562,7 @@ namespace TAP {
 	};
 
 	/**
-	 * Procedural interface. We keep a global Context object behind an
+	 * Convenience interface. We keep a global Context object behind an
 	 * std::shared_ptr named TAPP that is default-constructed and expose
 	 * its methods as free-standing functions.
 	 *
