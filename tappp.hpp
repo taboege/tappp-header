@@ -146,7 +146,7 @@ namespace TAP {
 	 * Its methods update the state and print TAP directly to the
 	 * output device.
 	 */
-	class Context : public std::enable_shared_from_this<Context> {
+	class Context {
 		std::ostream& out = std::cout;  /**< Output device     */
 		unsigned int planned = 0; /**< Number of planned tests */
 		unsigned int run     = 0; /**< Number of run tests     */
@@ -159,7 +159,7 @@ namespace TAP {
 
 		unsigned int depth       = 0; /**< Subtest depth       */
 		std::string description = ""; /**< Subtest description */
-		std::shared_ptr<Context> parent = nullptr; /**< Parent in the subtest stack */
+		Context* parent = nullptr;    /**< Parent in the subtest stack */
 
 		/**
 		 * Return `out` but apply `depth` indentation first.
@@ -205,28 +205,27 @@ namespace TAP {
 		 * same output device but indents its output, so that subtest-
 		 * unaware harnesses ignore it. When the subtest is destroyed,
 		 * it adds a single summary `pass` or `fail` to the test it
-		 * was created from.
-		 *
-		 * There must exist an std::shared_ptr refering to this context.
+		 * was created from. The user is responsible for keeping the
+		 * parent context alive.
 		 */
-		std::shared_ptr<Context> subtest(const std::string& message = "") {
-			auto sub = std::make_shared<Context>(out);
+		Context* subtest(const std::string& message = "") {
+			auto sub = std::make_unique<Context>(out);
 			sub->depth = depth + 1;
 			sub->description = message;
-			sub->parent = this->shared_from_this();
-			return sub;
+			sub->parent = this;
+			return sub.release();
 		}
 
 		/**
 		 * Like `subtest(message)` but already print a plan line.
 		 */
-		std::shared_ptr<Context> subtest(unsigned int tests, const std::string& message = "") {
-			auto sub = std::make_shared<Context>(out);
+		Context* subtest(unsigned int tests, const std::string& message = "") {
+			auto sub = std::make_unique<Context>(out);
 			sub->depth = depth + 1;
 			sub->description = message;
-			sub->parent = this->shared_from_this();
+			sub->parent = this;
 			sub->plan(tests);
-			return sub;
+			return sub.release();
 		}
 
 		/**
@@ -590,9 +589,9 @@ namespace TAP {
 			struct Guard {
 				std::shared_ptr<Context> top;
 
-				Guard(std::shared_ptr<Context> sub) {
+				Guard(Context* sub) {
 					top = TAPP;
-					TAPP = sub;
+					TAPP = std::shared_ptr<Context>(sub);
 				}
 
 				~Guard(void) {

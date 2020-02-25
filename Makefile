@@ -4,7 +4,7 @@ TESTS = $(patsubst %.t.cpp,%.t,$(wildcard t/*.t.cpp))
 all: $(TESTS)
 
 %.t: %.t.cpp tappp.hpp
-	g++ -std=c++17 -Wall -Wextra -Wno-unused-function -I. -o $@ $<
+	g++ -std=c++17 -Wall -Wextra -Wno-unused-function -I. -O2 -o $@ $<
 
 .PHONY: test
 test: $(TESTS)
