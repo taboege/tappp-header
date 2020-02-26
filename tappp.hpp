@@ -23,7 +23,7 @@
 #include <functional>
 #include <type_traits>
 
-#define TAPPP_VERSION	0x000100U
+#define TAPPP_VERSION	0x000200U
 
 namespace TAP {
 	/**

@@ -1,0 +1,17 @@
+Revision history for tappp.hpp
+
+v0.2.0 2020-02-26
+
+ - Remove std::shared_ptr from subtest interface
+ - Add documentation external to source code
+
+v0.1.0 2020-02-24
+
+ - Add basic Test::More-inspired functionality
+ - Add is and isnt
+ - Add throws and lives
+ - Add subtest support
+ - Provide best-effort diagnostics
+ - Add like
+ - Add throws_like
+ - Include a Convenience layer using global TAP::Context
