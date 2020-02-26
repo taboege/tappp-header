@@ -50,7 +50,7 @@ reason may be given. This results in a `1..0` plan line on the output
 device. The Context is marked as finished.
 
 ``` c++
-~Context(void)
+~Context(void) { … }
 ```
 
 The destructor closes the TAP session by printing a final plan line if
