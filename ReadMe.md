@@ -90,7 +90,8 @@ in C++17. For convenience, a procedural interface is written on top, which
 becomes nice to use once you are `using namespace TAP`.
 
 The library is short and contains short documentation in the source code.
-The complete documentation is is in the <Documentation.md> file.
+The complete documentation is in the [Documentation.md](./Documentation.md)
+file.
 
 The library's interface is close to Perl's [Test::More](https://metacpan.org/pod/Test::More)
 and Raku's [Test](https://docs.raku.org/type/Test) modules.
